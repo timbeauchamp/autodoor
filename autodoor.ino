@@ -22,25 +22,14 @@
 const int button1Pin = 18;     // the number of the pushbutton pin
 const int button2Pin = 19;     // the number of the pushbutton pin
 const int button3Pin = 20;     // the number of the pushbutton pin
+const int button4Pin = 21;     // the number of the pushbutton pin
 const int ledPin =  13;      // the number of the LED pin
-
-
-int eeAddress = 0;
-
-// variables will change:
-int button1State = 0;         // variable for reading the pushbutton stat
-int lastButton1State = LOW;   // the previous reading from the input pin
-int button2State = 0;         // variable for reading the pushbutton stat
-int lastButton2State = LOW;   // the previous reading from the input pin
-int button3State = 0;         // variable for reading the pushbutton stat
-int lastButton3State = LOW;   // the previous reading from the input pin
 
 
 // the following variables are unsigned longs because the time, measured in
 // milliseconds, will quickly become a bigger number than can be stored in an int.
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 500;    // the debounce time; increase if the output flickers
-
 
 
 bool _motorState = STOPPED;
@@ -54,6 +43,7 @@ int _minPosition = 0;
 int period = 500;
 unsigned long time_now = 0;
 
+int eeAddress = 0;
 struct ConfigDataStruct {
   int minPosition;
   int maxPosition;
@@ -78,6 +68,9 @@ void setup()
   pinMode(button3Pin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(button3Pin), pressedInterupt, FALLING);
 
+  pinMode(button4Pin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(button4Pin), pressedInterupt, FALLING);
+
   Serial.begin(9600);
   while (! Serial); // Wait for Serial 
   Serial.println("Ready");
@@ -92,7 +85,6 @@ void setup()
 
 void loop() 
 {
-
   updateMotor();
   simulateMotor();
   updateLED();
@@ -118,13 +110,11 @@ void updateMotor()
   {
     stepper.stop();
   }
-  
 }
+
 void loadConfig()
 {
-  
-  EEPROM.get(eeAddress, _configData);
-  
+  EEPROM.get(eeAddress, _configData); 
   Serial.println("Read config from EEPROM: ");
   Serial.println(_configData.minPosition);
   Serial.println(_configData.maxPosition);
@@ -150,74 +140,6 @@ void saveConfig()
     _configData.maxPosition = _maxPosition;
     _configData.initialized = MAGICNUMBER;
     EEPROM.put(eeAddress, _configData);     
-}
-
-void  button1Pressed()
-{
-  Serial.println("Button 1 Pressed");
-  startStopMotor();
-}
-
-void  button2Pressed()
-{
-  Serial.println("Button 2 Pressed, Adjusting Up");
-  
-  if( _motorState==STOPPED)
-  {
-    if(_doorState == DOOROPEN)
-    {
-      adjustMaxPosition(10);
-      openDoor();
-    }
-    else if(_doorState == DOORCLOSED)
-    {
-      adjustMinPosition(10);
-      _adjusting = true;
-      startMotor();
-    }
-  }
-}
-
-void  button3Pressed()
-{
-  Serial.println("Button 3 Pressed, Adjusting down");
-  
-  if( _motorState==STOPPED)
-  {
-    if(_doorState == DOOROPEN)
-    {
-      adjustMaxPosition(-10);
-      _adjusting = true;
-      startMotor();
-    }
-    else if(_doorState == DOORCLOSED)
-    {
-      adjustMinPosition(-10);
-      closeDoor();
-    }
-  }
-}
-
-
-void updateDFA()
-{
-  if( _motorState==MOVING)
-  {
-    if(_direction == OPENING)
-    {
-      if( getPosition() >= _maxPosition)
-      {
-        stopMotor();
-      }      
-    }
-    else // CLOSING
-    {
-      if( getPosition() <= _minPosition)
-      {
-        stopMotor();
-      }            
-    }
-  }
 }
 
 void adjustMinPosition(int amount)
@@ -347,6 +269,7 @@ void pressedInterupt()
   int reading1 = digitalRead(button1Pin);
   int reading2 = digitalRead(button2Pin);
   int reading3 = digitalRead(button3Pin);
+  int reading4 = digitalRead(button4Pin);
 
 
   if ((millis() - lastDebounceTime) > debounceDelay) 
@@ -355,26 +278,80 @@ void pressedInterupt()
     // delay, so take it as the actual current state:
     lastDebounceTime = millis();
 
-    button1State = reading1;
     if(reading1 == LOW)
     {
       button1Pressed();
     }
 
-    button2State = reading2;
     if(reading2 == LOW)
     {
       button2Pressed();
     }
     
-    button3State = reading3;
     if(reading3 == LOW)
     {
       button3Pressed();
     }
+
+    if(reading4 == LOW)
+    {
+      button4Pressed();
+    }
+    
   }else{
 //    Serial.println("bounce");
   }
+}
+void  button1Pressed()
+{
+  Serial.println("Button 1 Pressed");
+  startStopMotor();
+}
+
+void  button2Pressed()
+{
+  Serial.println("Button 2 Pressed, Adjusting Up");
+  
+  if( _motorState==STOPPED)
+  {
+    if(_doorState == DOOROPEN)
+    {
+      adjustMaxPosition(10);
+      openDoor();
+    }
+    else if(_doorState == DOORCLOSED)
+    {
+      adjustMinPosition(10);
+      _adjusting = true;
+      startMotor();
+    }
+  }
+}
+
+void  button3Pressed()
+{
+  Serial.println("Button 3 Pressed, Adjusting down");
+  
+  if( _motorState==STOPPED)
+  {
+    if(_doorState == DOOROPEN)
+    {
+      adjustMaxPosition(-10);
+      _adjusting = true;
+      startMotor();
+    }
+    else if(_doorState == DOORCLOSED)
+    {
+      adjustMinPosition(-10);
+      closeDoor();
+    }
+  }
+}
+
+void  button4Pressed()
+{
+  Serial.println("Button 4 Pressed");
+ 
 }
 
 void simulateMotor()
@@ -436,7 +413,7 @@ void showStatus()
      Serial.println(position);
 }
 
-String trueFalse(bool val)
+String trueFalse(bool val)  // helper to give nice text
 {
   if(val)
   {
@@ -448,7 +425,7 @@ String trueFalse(bool val)
   }
 }
 
-String openingClosing(bool val)
+String openingClosing(bool val)  // helper to give nice text
 {
   if(val == OPENING)
   {
@@ -460,7 +437,7 @@ String openingClosing(bool val)
   }
 }
 
-String openClosed(int val)
+String openClosed(int val)  // helper to give nice text
 {
   if(val == DOOROPEN)
   {
