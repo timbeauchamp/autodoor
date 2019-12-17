@@ -152,7 +152,7 @@ void updateLEDs()
     int pwmVal = 255;
     if(_timerRunning)
     {
-        int pwmVal = 255 * (1 + cos(2 * PI * millis() / 1000));
+        int pwmVal = int(255.0 * (1.0 + cos(2.0 * PI * millis() / 1000.0)) / 2.0);
     }
 
     for (int i=0; i <= 3; i++)
