@@ -1,11 +1,31 @@
+    // initialize the pushbutton pin as an input:
+
+void initializeButtons(bool withInterupt)
+{
+    pinMode(_buttonPins[0], INPUT_PULLUP);
+    pinMode(_buttonPins[1], INPUT_PULLUP);
+    pinMode(_buttonPins[2], INPUT_PULLUP);
+    pinMode(_buttonPins[3], INPUT_PULLUP);
+
+    if(withInterupt)
+    {
+        attachInterrupt(digitalPinToInterrupt(_buttonPins[0]), pressedInterupt, FALLING);
+        attachInterrupt(digitalPinToInterrupt(_buttonPins[1]), pressedInterupt, FALLING);
+        attachInterrupt(digitalPinToInterrupt(_buttonPins[2]), pressedInterupt, FALLING);
+        attachInterrupt(digitalPinToInterrupt(_buttonPins[3]), pressedInterupt, FALLING);
+    }
+}
+
 void pressedInterupt()
 {  
-    int reading1 = digitalRead(button1Pin);
-    int reading2 = digitalRead(button2Pin);
-    int reading3 = digitalRead(button3Pin);
-    int reading4 = digitalRead(button4Pin);
+    static unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled 
+    
+    int reading1 = digitalRead(_buttonPins[0]);
+    int reading2 = digitalRead(_buttonPins[1]);
+    int reading3 = digitalRead(_buttonPins[2]);
+    int reading4 = digitalRead(_buttonPins[3]);
 
-    if ((millis() - lastDebounceTime) > debounceDelay) 
+    if ((millis() - lastDebounceTime) > _debounceDelay) 
     {
         // whatever the reading is at, it's been there for longer than the debounce
         // delay, so take it as the actual current state:
@@ -35,6 +55,48 @@ void pressedInterupt()
     //    Serial.println("bounce");
     }
 }
+
+void checkButtons()  //  Non interupt version
+{  
+    static bool buttonStates[] = {HIGH, HIGH, HIGH, HIGH};
+    static unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled  
+    
+    int reading1 = digitalRead(_buttonPins[0]);
+    int reading2 = digitalRead(_buttonPins[1]);
+    int reading3 = digitalRead(_buttonPins[2]);
+    int reading4 = digitalRead(_buttonPins[3]);
+
+    if ((millis() - lastDebounceTime) > _debounceDelay) 
+    {
+        // whatever the reading is at, it's been there for longer than the debounce
+        // delay, so take it as the actual current state:
+        lastDebounceTime = millis();
+        
+        if(reading1 == LOW)
+        {
+          button1Pressed();
+        }
+        
+        if(reading2 == LOW)
+        {
+          button2Pressed();
+        }
+        
+        if(reading3 == LOW)
+        {
+          button3Pressed();
+        }
+        
+        if(reading4 == LOW)
+        {
+          button4Pressed();
+        }
+        
+    }else{
+    //    Serial.println("bounce");
+    }
+}
+
 
 void  button1Pressed()
 {

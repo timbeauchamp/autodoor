@@ -1,6 +1,6 @@
 void loadConfig()
 {
-    EEPROM.get(eeAddress, _configData); 
+    EEPROM.get(_eeAddress, _configData); 
     Serial.println("Read config from EEPROM: ");
     Serial.println(_configData.minPosition);
     Serial.println(_configData.maxPosition);
@@ -25,7 +25,7 @@ void saveConfig()
     _configData.minPosition = _minPosition;
     _configData.maxPosition = _maxPosition;
     _configData.initialized = MAGICNUMBER;
-    EEPROM.put(eeAddress, _configData);     
+    EEPROM.put(_eeAddress, _configData);     
 }
 
 

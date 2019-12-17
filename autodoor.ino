@@ -18,19 +18,14 @@
 #define DOORPARTIAL 0
 #define MAGICNUMBER 69
 
-// constants won't change. They're used here to set pin numbers:
-const int button1Pin = 18;     // the number of the pushbutton pin
-const int button2Pin = 19;     // the number of the pushbutton pin
-const int button3Pin = 20;     // the number of the pushbutton pin
-const int button4Pin = 21;     // the number of the pushbutton pin
-const int ledPin =  13;      // the number of the LED pin
+const int _buttonPins[] = {18, 19, 20, 21};
+const int _timerLightsPins[] =  {4, 5, 6, 7};
+const int _ledPin =  13;      // the number of the LED pin
 
 
-// the following variables are unsigned longs because the time, measured in
-// milliseconds, will quickly become a bigger number than can be stored in an int.
-unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
-unsigned long debounceDelay = 500;    // the debounce time; increase if the output flickers
-
+unsigned long _debounceDelay = 500;    // the debounce time; increase if the bouncy
+unsigned long _currentCountdown = 0;
+byte _timeLights = 0;
 
 bool _motorState = STOPPED;
 bool _direction = OPENING;
@@ -39,15 +34,11 @@ int _doorState = DOORCLOSED;
 int _currentPosition = 0;
 int _maxPosition = 720;
 int _minPosition = 0;
-long _currentCountdown = 0;
-byte _timeLights = 0;
+
 bool _timerRunning = true;
-
-
 int period = 500;
-unsigned long time_now = 0;
 
-int eeAddress = 0;
+int _eeAddress = 0;
 struct ConfigDataStruct {
   int minPosition;
   int maxPosition;
@@ -62,19 +53,11 @@ void setup()
 {
 
     // initialize the LED pin as an output:
-    pinMode(ledPin, OUTPUT);
-    // initialize the pushbutton pin as an input:
-    pinMode(button1Pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(button1Pin), pressedInterupt, FALLING);
+    pinMode(_ledPin, OUTPUT);
 
-    pinMode(button2Pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(button2Pin), pressedInterupt, FALLING);
-
-    pinMode(button3Pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(button3Pin), pressedInterupt, FALLING);
-
-    pinMode(button4Pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(button4Pin), pressedInterupt, FALLING);
+    // initialize the pushbutton pins as an input:
+    bool withInterupt = false;
+    initializeButtons(withInterupt);
 
     Serial.begin(9600);
     while (! Serial); // Wait for Serial 
@@ -90,9 +73,10 @@ void setup()
 
 void loop() 
 {
+    checkButtons();
     updateMotor();
     simulateMotor();
-    updateLED();
+    updateLEDs();
 }
 
 
@@ -150,58 +134,36 @@ int getPosition()
 }
 
 
-void positionUpdated()
+
+void updateLEDs()
 {
-    if(_motorState)
-    {
-        if(_adjusting)
-        {
-            if(_doorState == DOOROPEN && _direction == CLOSING && _currentPosition <= _maxPosition)
-            {
-                Serial.println("New Top");
-                stopMotor();
-                _adjusting = false;
-            }else if(_doorState == DOORCLOSED && _direction == OPENING && _currentPosition >= _minPosition)
-            {
-                Serial.println("New Bottom");
-                stopMotor();     
-                _adjusting = false;       
-            }
-        }
-        else
-        {
-            if(_direction == OPENING && _currentPosition >= _maxPosition)
-            {
-                Serial.println("Top");
-                _doorState = DOOROPEN;
-                stopMotor();
-                reverseMotor();
-            }else if(_direction == CLOSING && _currentPosition <= _minPosition)
-            {
-                Serial.println("Bottom");
-                _doorState = DOORCLOSED;
-                stopMotor();     
-                reverseMotor();
-            }
-            else
-            {
-                _doorState = DOORPARTIAL;
-            }
-        }
-    }
-}
-
-
-
-void updateLED()
-{
+    static int pulsePeriod = 2000;
     // Update LED
     if(_motorState)
     {
-        digitalWrite(ledPin, HIGH);
+        digitalWrite(_ledPin, HIGH);
     }
     else
     {
-        digitalWrite(ledPin, LOW);
+        digitalWrite(_ledPin, LOW);
+    }
+
+    
+    int pwmVal = 255;
+    if(_timerRunning)
+    {
+        int pwmVal = 255 * (1 + cos(2 * PI * millis() / 1000));
+    }
+
+    for (int i=0; i <= 3; i++)
+    {
+        if(_timeLights & (2 ^ i))
+        {
+            analogWrite(_timerLightsPins[i],pwmVal);            
+        } 
+        else
+        {
+            analogWrite(_timerLightsPins[i], 0);
+        }
     }
 }

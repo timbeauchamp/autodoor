@@ -48,10 +48,11 @@ void updateMotor()
 
 void simulateMotor()
 {
-    static int delay = 7;
+    static int skipDelay = 7;  // milliseconds to jump over  (7 works well)
     static unsigned long lastMotorTick = 0;
+    static unsigned long time_now = 0;
 
-    if(millis() - delay > lastMotorTick)
+    if(millis() - skipDelay > lastMotorTick)
     {
         lastMotorTick = millis();
     
