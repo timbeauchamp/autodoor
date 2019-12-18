@@ -28,7 +28,6 @@ void saveConfig()
     EEPROM.put(_eeAddress, _configData);     
 }
 
-
 void showStatus()
 {
      Serial.println("MotorState: " + trueFalse(_motorState));
@@ -44,6 +43,40 @@ void showStatus()
      position += stepper.currentPosition();
      position += "\n\n";
      Serial.println(position);
+}
+
+void showTimerLEDs()
+{
+    Serial.print("Timer LEDs: ");
+
+    if(_timeLights & B1000){
+        Serial.print(" 1");     
+    }
+    else{
+        Serial.print(" 0");     
+    }
+
+    if(_timeLights & B0100){
+        Serial.print(" 1");     
+    }
+    else{
+        Serial.print(" 0");     
+    }
+    
+    if(_timeLights & B0010){
+        Serial.print(" 1");     
+    }
+    else{
+        Serial.print(" 0");     
+    }
+    
+    if(_timeLights & B0001){
+        Serial.print(" 1");     
+    }
+    else{
+        Serial.print(" 0");     
+    }
+    Serial.println("");    
 }
 
 String trueFalse(bool val)  // helper to give nice text

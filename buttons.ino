@@ -150,4 +150,5 @@ void  button4Pressed()
     // increment timer
     _timeLights++;
     _timeLights  = _timeLights & B00001111;
+    showTimerLEDs();
 }
