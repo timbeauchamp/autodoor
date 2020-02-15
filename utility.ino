@@ -2,15 +2,12 @@ void loadConfig()
 {
     EEPROM.get(_eeAddress, _configData); 
     Serial.println("Read config from EEPROM: ");
-    Serial.println(_configData.minPosition);
-    Serial.println(_configData.maxPosition);
     Serial.println(_configData.initialized);
 
     if(_configData.initialized == MAGICNUMBER)
     {
         Serial.println("Initialized: true");
-        _minPosition = _configData.minPosition;
-        _configData.maxPosition = _maxPosition;
+        _maxPosition = _configData.maxPosition;
     }
     else
     {
@@ -22,7 +19,6 @@ void loadConfig()
 void saveConfig()
 {
     Serial.println("Initialized: false");
-    _configData.minPosition = _minPosition;
     _configData.maxPosition = _maxPosition;
     _configData.initialized = MAGICNUMBER;
     EEPROM.put(_eeAddress, _configData);     
@@ -33,10 +29,8 @@ void showStatus()
      Serial.println("MotorState: " + trueFalse(_motorState));
      Serial.println("Direction: " + openingClosing(_direction));
      Serial.println("State: " + openClosed(_doorState));
-     String position = "Position/min/max: ";
+     String position = "Position/max: ";
      position += _currentPosition;
-     position += "/";
-     position += _minPosition;
      position += "/";
      position += _maxPosition;
      position += "\nStepperFeedback: ";

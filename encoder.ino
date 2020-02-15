@@ -9,7 +9,7 @@ void positionUpdated()
                 Serial.println("New Top");
                 stopMotor();
                 _adjusting = false;
-            }else if(_doorState == DOORCLOSED && _direction == OPENING && _currentPosition >= _minPosition)
+            }else if(_doorState == DOORCLOSED && _direction == OPENING && _currentPosition >= 0)
             {
                 Serial.println("New Bottom");
                 stopMotor();     
@@ -24,7 +24,7 @@ void positionUpdated()
                 _doorState = DOOROPEN;
                 stopMotor();
                 reverseMotor();
-            }else if(_direction == CLOSING && _currentPosition <= _minPosition)
+            }else if(_direction == CLOSING && _currentPosition <= 0)
             {
                 Serial.println("Bottom");
                 _doorState = DOORCLOSED;
